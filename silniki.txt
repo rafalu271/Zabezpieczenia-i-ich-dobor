@@ -1,0 +1,15 @@
+redox
+250
+14
+twoja
+150
+16
+stara
+560
+24
+zapier
+500
+16
+Dala
+800
+50
