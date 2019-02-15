@@ -21,12 +21,12 @@ float prad_znam_s[50], moc_s[50], sprawnosc_s[50], il_in[50];
 
 //	Przechowywanie parametrów bezpieczników
 string nazwa_z[50];
-int nr_z[50];
+int nr_z[50], numer_dobrany_bezp;
 float prad_znam_z[50];
 
 //	Przechowywanie parametrów przewodów
 string nazwa_k[50], przekroj_k[50];
-int nr_k[50], un_k[50];
+int nr_k[50], un_k[50], numer_dobrany_kabel;
 float obc_prad_k[50];
 
 int podany_silnik, podany_wkladka, podany_rozruch, podany_kabel;  // <--- Wartoœci pobierane od urzytkownika
@@ -37,6 +37,8 @@ class cPliki
 {
 private:
 	string linia;
+	int czy_zapis;
+	string nazwa_plik_zapis;
 
 public:
 
@@ -154,6 +156,30 @@ public:
 		ilosc_linii = ilosc_linii - 1;
 		przewod.close();
 	}
+
+	void eksport_obliczen(int nr_silnika, int zmienna_pom_bez, int zmienna_pom_kabel)
+	{
+		cout << "Czy chcesz zapisac dobrane elementy do silnika?" << endl << "1. - Tak, poprosze" << endl << "2. - Nie, dziekuje" << endl;
+		cin >> czy_zapis;
+
+		if (czy_zapis == 1)
+		{
+			cout << endl << "Jak chcesz nazwac plik?" << endl;
+			cin >> nazwa_plik_zapis;
+
+			fstream plik;
+			plik.open(nazwa_plik_zapis,ios::out);
+
+			plik << "Podany silnik: " << nazwa_s[nr_silnika] << ", Moc: " << moc_s[nr_silnika] << "kW, Sprawnosc: " << sprawnosc_s[nr_silnika]
+				 << "%, Prad znamionowy: " << prad_znam_s[nr_silnika] << "A, Il/In = " << il_in[nr_silnika] << endl;
+			plik << "Dobrany przewod: " << nazwa_k[zmienna_pom_kabel] << " " << przekroj_k[zmienna_pom_kabel] << endl;
+			plik << "Dobrana wkladka: " << nazwa_z[zmienna_pom_bez] << " " << prad_znam_z[zmienna_pom_bez] << "A" << endl;
+
+			plik.close();
+
+		}
+
+	}
 };
 
 class cWyswietl
@@ -163,18 +189,20 @@ public:
 
 	void wybor(int linia, string element, string nazwa[], int nr_elementu[])
 	{
+		bledny_numer:
 
 		for (int i = 1; i <= linia; i++)
 		{
 			cout << nr_elementu[i] << " " << nazwa[i] << /*" " << moc_s[i] << " " << prad_s[i] <<*/ endl;
 		}
-		cout << "Podaj numer wybranego " << element << ": ";
+		cout << endl << "Podaj numer wybranego " << element << ": ";
 		cin >> pobrany_element;
 
 		if (pobrany_element > linia)
 		{
-			cout << "Podany nr. " << element <<" nie istnieje. Prosze podac numer jeszcze raz z podanych na ekranie: ";
-			cin >> pobrany_element;
+			system ("cls");
+			cout << "Podany nr. " << element <<" nie istnieje." << endl << "Prosze podac numer jeszcze raz z podanych na ekranie: " << endl << endl;
+			goto bledny_numer;
 		}
 
 		system ("cls");
@@ -227,7 +255,7 @@ public:
 		// Funkcja porownawcza dwoch powyzszych warunkow
 		//
 		//
-
+		numer_dobrany_kabel = zmienna_pom;
 		cout << "Dobrany przewod: " << nazwa_k[zmienna_pom] << " " << przekroj_k[zmienna_pom] << endl;
 	}
 
@@ -259,7 +287,7 @@ public:
 			} while (I_pom3 >= prad_znam_z[zmienna_pom]);
 			
 																	cout << "zmien pom = " << zmienna_pom << endl;
-
+			numer_dobrany_bezp = zmienna_pom;
 			cout << "Dobrana wkladka: " << nazwa_z[zmienna_pom] << " " << prad_znam_z[zmienna_pom] << "A" << endl;
 		}
 
@@ -271,7 +299,7 @@ public:
 			} while (Ib >= prad_znam_z[zmienna_pom]);
 
 																	cout << "zmien pom = " << zmienna_pom << endl;
-
+			numer_dobrany_bezp = zmienna_pom;
 			cout << "Dobrana wkladka: " << nazwa_z[zmienna_pom] << " " << prad_znam_z[zmienna_pom] << "A" << endl;
 		}
 	}
@@ -284,7 +312,19 @@ public:
 int main()
 {
 
+	cout << endl << "Program sluzy do doboru zabezpieczenia oraz" << endl << "przewodu dla wybranego z katalogu silnika." << endl << endl;
+	cout << "Katalogi txt musza znajdowac sie w wolderze razem z programem: " << endl;
+	cout << " - silniki.txt" << endl;
+	cout << " - zabezpieczenia.txt" << endl;
+	cout << " - kable.txt" << endl << endl;
+
+	cout << "Wcisnij Enter by kontynuowac...";
+	getchar ();
+	system ("cls");
+
 // ----------------------------- Pobranie danych z pliku silniki.txt -----------------------------
+
+	kolejny_przypadek:
 
 	cPliki silniki;
 	silniki.pobierz_plik_silniki("silniki.txt");
@@ -297,7 +337,7 @@ int main()
 	druk.wybor(ilosc_linii_sil, "silnika", nazwa_s, nr_s);
 	podany_silnik = druk.pobrany_element;
 
-	cout << "Podany silnik: " << nazwa_s[podany_silnik] << ", Moc: " << moc_s[podany_silnik] << endl << "kW, Sprawnosc: " << sprawnosc_s[podany_silnik]
+	cout << "Podany silnik: " << nazwa_s[podany_silnik] << ", Moc: " << moc_s[podany_silnik] << "kW, " << endl << "Sprawnosc: " << sprawnosc_s[podany_silnik]
 	<< "%, Prad znamionowy: " << prad_znam_s[podany_silnik] << "A, Il/In = " << il_in[podany_silnik] << endl << endl;
 
 // ----------------------------- Pobranie danych z pliku zabezpieczenia.txt -----------------------------
@@ -305,53 +345,62 @@ int main()
 	cPliki zabezpieczenia;
 	zabezpieczenia.pobierz_plik_zabezpieczenia("zabezpieczenia.txt");
 
-// Wyœwietlanie oraz wybór modelu wkladki wczytanej z pliku
-
-/*
-	int ilosc_linii_zabezp = zabezpieczenia.ilosc_linii;
-
-	druk.wybor(ilosc_linii_zabezp, "zabezpieczenia", nazwa_z, nr_z);
-	podany_wkladka = druk.pobrany_element;
-*/
-
-// ----------------------------- Pobranie danych z pliku przewody.txt -----------------------------
+// ----------------------------- Pobranie danych z pliku kable.txt -----------------------------
 
 	cPliki kable;
 	kable.pobierz_plik_przewody("kable.txt");
 
-/*
-	int ilosc_linii_kabli = kable.ilosc_linii;
-
-	druk.wybor(ilosc_linii_kabli, "kabla", nazwa_k, nr_k);
-	podany_kabel = druk.pobrany_element;
-*/
-
 // ----------------------------- Wybór rodzaju rozruchu -----------------------------
 
-	cout << "Wybierz rodzaj rozruchu" << endl;
+	rozruch:										//Etykieta dla zle dobranego rozruchu
+
+	cout << "Mozliwe rodzaje rozruchu:" << endl;
 	cout << 1 << ". rozruch sredni - dzialanie opoznione" << endl;
 	cout << 2 << ". rozruch nr 2" << endl;
 
-	cout << "Podaj numer rodzaju rozruchu: ";
+	cout << "Podaj numer dobranego rodzaju rozruchu: ";
 	cin >> podany_rozruch;
 
 	if (podany_rozruch > 2)
 	{
-		cout << "Podany rozruch nie istnieje. Prosze wybrac ponownie z podanych na ekranie.";
-		cin >> podany_rozruch;
+		system ("cls");
+		cout << "Podany rozruch nie istnieje. Prosze wybrac ponownie z podanych ponizej." << endl << endl;
+		goto rozruch;
 	}
 
 	system ("cls");
+
 // ----------------------------- Obliczenia doboru wk³adki oraz porzewodu -----------------------------
 
 	cObliczenia oblicz;
 	oblicz.dobor_przewodu(podany_silnik);
 	oblicz.dobor_zabezpieczenie();
 
+// ----------------------------- Czy chcesz wyeksportowac obliczenia? -----------------------------
 
-	string wyjscie;
-	cin >> wyjscie;
+	cPliki zapis;
+	zapis.eksport_obliczen(podany_silnik, numer_dobrany_bezp, numer_dobrany_kabel);
 
-	getchar ();
+// ----------------------------- Czy chcesz dobrac przewody ponownie? -----------------------------
+
+	int ponownie;
+	cout << endl << "Czy chcesz dobrac elementy ponownie?: " << endl << "1 - Tak" << endl << "2 - Nie" << endl;
+	cin >> ponownie;
+
+	system ("cls");
+
+	if (ponownie==1)
+	{
+		goto kolejny_przypadek;
+	}
+
+	else
+	{
+		cout << "Dziekujemy za skozystanie z naszych uslug." << endl << "Zyczymy milego dnia!" << endl << endl << "R Urlich Corp." << endl << endl;
+		cout << "Prosze wcisnac dowolny klawisz oraz Enter by zakonczyc...";
+		int koniec;
+		cin >> koniec;
+	}
+
 	return 0;
 }
